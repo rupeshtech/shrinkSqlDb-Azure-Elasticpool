@@ -1,0 +1,1 @@
+# shrinkSqlDb-Azure-Elasticpool
