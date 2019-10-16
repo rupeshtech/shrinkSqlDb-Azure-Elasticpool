@@ -15,7 +15,7 @@
     Afftected and Unaffcted Databases. By Afftected Database means Database where Shrinking is needed
     Affected and Unaffected Elasticpools. By Afftected Elasticpool means Elasticpools where used space is very high (more than 90%) 
 .NOTES
-    This scipt uses AZ modules of Microsoft Azure PowerShell.
+    This script uses AZ modules of Microsoft Azure PowerShell.
     https://docs.microsoft.com/en-us/powershell/azure/new-azureps-module-az
     https://github.com/Azure/azure-powershell/blob/master/documentation/announcing-az-module.md
 .ROLE
@@ -106,9 +106,7 @@ else{
 $serverCount = $servers | Measure-Object
 Write-Output "Server count is $($serverCount.Count)"
 
-
 foreach ($server in $servers) {
-    
     try  {
             Write-Output "Setting Firewall Rule for server : $($server.ServerName)"
             New-AzSqlServerFirewallRule -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName -FirewallRuleName "FireWallRule1" -StartIpAddress "xxx.xxx.xx.xx" -EndIpAddress "xxx.xxx.xx.xx"
@@ -124,23 +122,19 @@ foreach ($server in $servers) {
         $count =0
 
         $sqlCommandForElasticPool = "SELECT TOP 1 avg_allocated_storage_percent  FROM sys.elastic_pool_resource_stats WHERE elastic_pool_name = '$($pool.ElasticPoolName)' ORDER BY end_time DESC"
-
         $serverFqdn = "tcp:" + $server.ServerName + ".database.windows.net,1433"
-
         try {
             $elasticPoolStorageMetrics = (Invoke-Sqlcmd -ServerInstance $serverFqdn `
                 -Database "master" `
                 -Username $userName `
                 -Password $password `
                 -Query $sqlCommandForElasticPool)
-
         }
         catch {
             $firewallFailedServer = $firewallFailedServer + $server.ServerName
             Write-Output "Exception occured while getting Elasticpool metrics. ErrorMessage: $($_.Exception.Message)"
         }
         #Write-Output $elasticPoolStorageMetrics | ft
-
         Write-Output "Server name is: $($server.ServerName). Elasticpoolname is: $($pool.ElasticPoolName). avg_allocated_storage_percent is : $($elasticPoolStorageMetrics.avg_allocated_storage_percent)"
 
         # Check Allocated storage metics for elastic pool is above 90 percent. Change according to your use case
@@ -171,7 +165,7 @@ foreach ($server in $servers) {
                     $databaseStorageMetrics = (Invoke-Sqlcmd -ServerInstance $serverFqdn `
                         -Database $database.DatabaseName `
                         -Username $userName `
-                        -Password $password> `
+                        -Password $password `
                         -Query $sqlCommand)
                 }
                 catch {
@@ -181,6 +175,7 @@ foreach ($server in $servers) {
                 Write-Output $databaseStorageMetrics | Sort-Object `
                     -Property DatabaseDataSpaceAllocatedUnusedInMB `
                     -Descending | Format-Table
+
                 # Check Unused storage metics for Database is above 1GB. Change according to your use case
                 if($databaseStorageMetrics.DatabaseDataSpaceAllocatedUnusedInMB -gt 1000) {
                     Write-Output "shinking started for pool : $($pool.ElasticPoolName) and DB:$($database.DatabaseName) and server: $($server.ServerName)"
@@ -206,7 +201,6 @@ foreach ($server in $servers) {
                                     -Query $sqlCommandToFreeSpace)
 
                     Write-Output "`n" "shinking succeedded for pool : $($pool.ElasticPoolName) and DB:$($database.DatabaseName)"
-
                 }
                 else {
                     Write-Output "shinking not started for pool : $($pool.ElasticPoolName) and DB:$($database.DatabaseName) . unused space is: $($databaseStorageMetrics.DatabaseDataSpaceAllocatedUnusedInMB) "
