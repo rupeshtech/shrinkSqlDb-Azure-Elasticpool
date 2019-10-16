@@ -1,5 +1,5 @@
 # shrinkSqlDb-Azure-Elasticpool
-    This repository contains a powrshell script (runbook) to shrink Databases in Azure elastic pools.
+    This repository contains a powershell script (runbook) to shrink Databases in Azure elastic pools.
 
 ## Flow
     Following is the flow of Scrip
